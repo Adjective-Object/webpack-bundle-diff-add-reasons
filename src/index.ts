@@ -1,5 +1,5 @@
 export {
     ModuleGraphNodeWithReasons,
     ModuleGraphWithReasons,
-    getModuleGraphWithReasons
+    getModuleGraphWithReasons,
 } from './getModuleGraphWithReasons';

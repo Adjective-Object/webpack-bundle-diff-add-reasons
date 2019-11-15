@@ -21,7 +21,7 @@ export type ModuleGraphNodeWithReasons<
  */
 export function getModuleGraphWithReasons(
     graph: ModuleGraph,
-    stats: WebpackStats.ToJsonOutput
+    stats: WebpackStats.ToJsonOutput,
 ): ModuleGraphWithReasons {
     const newGraph: ModuleGraphWithReasons = {};
 
@@ -35,7 +35,7 @@ export function getModuleGraphWithReasons(
     }
 
     const ensureNodeInNewGraph = (
-        moduleName: string
+        moduleName: string,
     ): ModuleGraphNodeWithReasons => {
         let mod: ModuleGraphNodeWithReasons = newGraph[moduleName];
         if (mod === undefined) {
@@ -70,15 +70,15 @@ export function getModuleGraphWithReasons(
         ).sort((a: WebpackStats.Reason, b: WebpackStats.Reason) =>
             a.moduleName && b.moduleName
                 ? a.moduleName.localeCompare(b.moduleName)
-                : 0
+                : 0,
         );
 
         sortedReasons.forEach((reason: WebpackStats.Reason): void => {
             if (!reason.moduleName) {
                 throw new Error(
                     `Reason has no moduleName. Reason: ${JSON.stringify(
-                        reason
-                    )}`
+                        reason,
+                    )}`,
                 );
             }
 
