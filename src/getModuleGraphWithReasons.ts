@@ -10,8 +10,33 @@ export interface ModuleGraphWithReasons<
 export type ModuleGraphNodeWithReasons<
     TBaseNode extends ModuleGraphNode = ModuleGraphNode
 > = TBaseNode & {
+    reasons: string[];
     reasonChildren: string[];
 };
+
+function getRegularizedReasonModuleName(
+    node: WebpackStats.FnModules,
+    reason: WebpackStats.Reason,
+): string | null {
+    const name = reason.moduleName;
+    if (!name) {
+        return null;
+    }
+    if (name.match(/ \+ \d+ modules$/)) {
+        // parent is a concatenated module.
+        // recover from this by taking the last element
+        // in the issuerPatj
+        if (!node.issuerPath || !node.issuerPath.length) {
+            throw new Error(
+                'module included by concatenated module has no issuer path',
+            );
+        }
+        const lastNodeInPath = node.issuerPath[node.issuerPath.length - 1];
+        return lastNodeInPath.name;
+    }
+
+    return name;
+}
 
 /**
  * Builds a copy of a module graph tracking child information & with a unique ID associated
@@ -30,9 +55,33 @@ export function getModuleGraphWithReasons(
     }
 
     const moduleMap: Map<string, WebpackStats.FnModules> = new Map();
-    for (let module of stats.modules) {
-        moduleMap.set(module.name, module);
+    let toVisit = [...stats.modules.values()];
+    while (toVisit.length) {
+        const thisModule = toVisit.pop();
+        if (!thisModule) {
+            continue;
+        }
+        moduleMap.set(thisModule.name, thisModule);
+        if (thisModule.modules) {
+            toVisit = toVisit.concat([...thisModule.modules.values()]);
+        }
     }
+    for (let module of stats.modules) {
+    }
+    // if (stats.chunks) {
+    //     for (let chunk of stats.chunks) {
+    //         if (chunk.modules) {
+    //             for (let module of chunk.modules) {
+    //                 if (moduleMap.has(module.name)) {
+    //                     throw new Error(
+    //                         `duplicate module ${module.name} in chunk with names ${chunk.names}`,
+    //                     );
+    //                 }
+    //                 moduleMap.set(module.name, module);
+    //             }
+    //         }
+    //     }
+    // }
 
     const ensureNodeInNewGraph = (
         moduleName: string,
@@ -45,6 +94,7 @@ export function getModuleGraphWithReasons(
             // copy the module from the original graph
             mod = JSON.parse(JSON.stringify(graph[moduleName]));
             mod.reasonChildren = [];
+            mod.reasons = [];
             // add the new module to the new graph
             newGraph[moduleName] = mod;
         }
@@ -62,6 +112,9 @@ export function getModuleGraphWithReasons(
         }
         const statsNode = moduleMap.get(mod.name);
         if (!statsNode) {
+            const allNames = Array.from(moduleMap.keys());
+            allNames.sort();
+            console.log(allNames);
             throw new Error(`Module ${mod.name} not in stats.json modules`);
         }
 
@@ -74,17 +127,36 @@ export function getModuleGraphWithReasons(
         );
 
         sortedReasons.forEach((reason: WebpackStats.Reason): void => {
-            if (!reason.moduleName) {
+            if (reason.type == 'multi entry' || reason.type == 'single entry') {
+                return;
+            }
+
+            const reasonModuleName = getRegularizedReasonModuleName(
+                statsNode,
+                reason,
+            );
+
+            if (!reasonModuleName) {
                 throw new Error(
-                    `Reason has no moduleName. Reason: ${JSON.stringify(
-                        reason,
-                    )}`,
+                    `Reason has no moduleName. Node: ${JSON.stringify(
+                        statsNode,
+                    )} Reason: ${JSON.stringify(reason)}`,
                 );
             }
 
-            const reasonParentMod = ensureNodeInNewGraph(reason.moduleName);
+            mod.reasons.push(reasonModuleName);
+            const reasonParentMod = ensureNodeInNewGraph(reasonModuleName);
             reasonParentMod.reasonChildren.push(mod.name);
         });
+    }
+
+    for (const moduleName of moduleNames) {
+        const mod = newGraph[moduleName];
+        if (!mod) {
+            continue;
+        }
+        mod.reasons = Array.from(new Set(mod.reasons)).sort();
+        mod.reasonChildren = Array.from(new Set(mod.reasonChildren)).sort();
     }
 
     return newGraph;

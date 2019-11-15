@@ -18,8 +18,10 @@
     },
     "devDependencies": {
         "@types/jest": "^24.0.23",
+        "@types/mz": "^0.0.32",
         "@types/node": "^12.6.8",
         "jest": "^24.9.0",
+        "mz": "^2.7.0",
         "prettier": "^1.19.1",
         "rollup": "^1.17.0",
         "rollup-plugin-typescript2": "^0.22.0",
