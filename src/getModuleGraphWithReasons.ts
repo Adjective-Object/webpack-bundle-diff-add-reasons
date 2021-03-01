@@ -127,7 +127,7 @@ export function getModuleGraphWithReasons(
         );
 
         sortedReasons.forEach((reason: WebpackStats.Reason): void => {
-            if (reason.type == 'multi entry' || reason.type == 'single entry') {
+            if (!reason.type || (reason.type as any) == 'entry' || reason.type == 'multi entry' || reason.type == 'single entry') {
                 return;
             }
 
