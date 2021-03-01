@@ -127,7 +127,18 @@ export function getModuleGraphWithReasons(
         );
 
         sortedReasons.forEach((reason: WebpackStats.Reason): void => {
-            if (!reason.type || (reason.type as any) == 'entry' || reason.type == 'multi entry' || reason.type == 'single entry') {
+            if (
+                // include modules without type. This includes modules
+                // that webpack includes but bailed of because it could not
+                // recognize.
+                //
+                // (In tests this triggers on style loader chains of preprocessed css)
+                reason.type &&
+                // Handle webpack updating underneath types.
+                ((reason.type as any) == 'entry' ||
+                    reason.type == 'multi entry' ||
+                    reason.type == 'single entry')
+            ) {
                 return;
             }
 

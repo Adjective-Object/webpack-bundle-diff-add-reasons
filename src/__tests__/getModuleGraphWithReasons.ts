@@ -435,6 +435,7 @@ describe('getModuleGraphWithReasons', () => {
     });
 
     it('matches the snapshot', async () => {
+        // Snapshot from https://github.com/pinterest/bonsai @ 08b24a4
         const statsJsonString = await readFile(
             joinPath(__dirname, '/test-data', 'bonsai-stats.json'),
             'utf-8',
