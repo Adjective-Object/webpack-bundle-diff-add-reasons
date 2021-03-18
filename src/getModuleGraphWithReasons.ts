@@ -133,11 +133,14 @@ export function getModuleGraphWithReasons(
                 // recognize.
                 //
                 // (In tests this triggers on style loader chains of preprocessed css)
-                reason.type &&
-                // Handle webpack updating underneath types.
-                ((reason.type as any) == 'entry' ||
-                    reason.type == 'multi entry' ||
-                    reason.type == 'single entry')
+                (reason.type &&
+                    // Handle webpack updating underneath types.
+                    ((reason.type as any) == 'entry' ||
+                        reason.type == 'multi entry' ||
+                        reason.type == 'single entry')) ||
+                // Entry modules get a reason that says it's used as a library export, with no moduleName or other information
+                // https://github.com/webpack/webpack/blob/547b4d8deb75355bf5695349fdcc3830ec22d68f/lib/library/ExportPropertyLibraryPlugin.js#L86
+                reason.explanation === 'used as library export'
             ) {
                 return;
             }
