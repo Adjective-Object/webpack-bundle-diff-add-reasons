@@ -1,14 +1,10 @@
 import { ModuleGraph } from 'webpack-bundle-diff';
-import { Stats as WebpackStats } from 'webpack';
+import { StatsCompilation as WebpackStats } from 'webpack';
 import { getModuleGraphWithReasons } from '../getModuleGraphWithReasons';
 import { deriveBundleData } from 'webpack-bundle-diff';
 import { readFile } from 'mz/fs';
 import { join as joinPath } from 'path';
 import { Stats } from 'webpack-bundle-diff/lib/types/Stats';
-
-type RecursivePartial<T> = {
-    [P in keyof T]?: RecursivePartial<T[P]>;
-};
 
 describe('getModuleGraphWithReasons', () => {
     it('adds reason relationships', () => {
@@ -33,7 +29,7 @@ describe('getModuleGraphWithReasons', () => {
             },
         };
 
-        const testStats: RecursivePartial<WebpackStats.ToJsonOutput> = {
+        const testStats: WebpackStats = {
             modules: [
                 {
                     name: 'lib/foo',
@@ -42,6 +38,7 @@ describe('getModuleGraphWithReasons', () => {
                     name: 'lib/bar',
                     reasons: [
                         {
+                            active: true,
                             moduleName: 'lib/foo',
                         },
                     ],
@@ -50,6 +47,7 @@ describe('getModuleGraphWithReasons', () => {
                     name: 'lib/baz',
                     reasons: [
                         {
+                            active: true,
                             moduleName: 'lib/bar',
                         },
                     ],
@@ -59,7 +57,7 @@ describe('getModuleGraphWithReasons', () => {
 
         const outGraph = getModuleGraphWithReasons(
             testGraph,
-            testStats as WebpackStats.ToJsonOutput,
+            testStats as WebpackStats,
         );
 
         expect(outGraph['lib/bar'].reasons).toEqual(['lib/foo']);
@@ -88,7 +86,7 @@ describe('getModuleGraphWithReasons', () => {
             },
         };
 
-        const testStats: RecursivePartial<WebpackStats.ToJsonOutput> = {
+        const testStats: WebpackStats = {
             modules: [
                 {
                     name: 'lib/foo',
@@ -97,6 +95,7 @@ describe('getModuleGraphWithReasons', () => {
                     name: 'lib/bar',
                     reasons: [
                         {
+                            active: true,
                             moduleName: 'lib/foo',
                         },
                     ],
@@ -105,6 +104,7 @@ describe('getModuleGraphWithReasons', () => {
                     name: 'lib/baz',
                     reasons: [
                         {
+                            active: true,
                             moduleName: 'lib/bar',
                         },
                     ],
@@ -114,7 +114,7 @@ describe('getModuleGraphWithReasons', () => {
 
         const outGraph = getModuleGraphWithReasons(
             testGraph,
-            testStats as WebpackStats.ToJsonOutput,
+            testStats as WebpackStats,
         );
 
         expect(outGraph['lib/foo'].reasonChildren).toEqual(['lib/bar']);
@@ -143,7 +143,7 @@ describe('getModuleGraphWithReasons', () => {
                 size: 10,
             },
         };
-        const testStats: RecursivePartial<WebpackStats.ToJsonOutput> = {
+        const testStats: WebpackStats = {
             modules: [
                 {
                     name: 'lib/foo',
@@ -152,6 +152,7 @@ describe('getModuleGraphWithReasons', () => {
                     name: 'lib/bar',
                     reasons: [
                         {
+                            active: true,
                             moduleName: 'lib/foo',
                         },
                     ],
@@ -160,6 +161,7 @@ describe('getModuleGraphWithReasons', () => {
                     name: 'lib/baz',
                     reasons: [
                         {
+                            active: true,
                             moduleName: 'lib/bar',
                         },
                     ],
@@ -173,7 +175,7 @@ describe('getModuleGraphWithReasons', () => {
 
         getModuleGraphWithReasons(
             testGraph,
-            testStats as WebpackStats.ToJsonOutput,
+            testStats as WebpackStats,
         );
 
         expect(testGraph).toEqual(testGraphClone);
@@ -194,12 +196,13 @@ describe('getModuleGraphWithReasons', () => {
                 size: 10,
             },
         };
-        const testStats: RecursivePartial<WebpackStats.ToJsonOutput> = {
+        const testStats: WebpackStats = {
             modules: [
                 {
                     name: 'lib/foo',
                     reasons: [
                         {
+                            active: true,
                             moduleName: 'lib/bar',
                         },
                     ],
@@ -208,6 +211,7 @@ describe('getModuleGraphWithReasons', () => {
                     name: 'lib/bar',
                     reasons: [
                         {
+                            active: true,
                             moduleName: 'lib/foo',
                         },
                     ],
@@ -216,7 +220,7 @@ describe('getModuleGraphWithReasons', () => {
         };
         const childGraph = getModuleGraphWithReasons(
             testGraph,
-            testStats as WebpackStats.ToJsonOutput,
+            testStats as WebpackStats,
         );
 
         expect(childGraph['lib/foo'].reasonChildren).toEqual(['lib/bar']);
@@ -250,7 +254,7 @@ describe('getModuleGraphWithReasons', () => {
                 size: 10,
             },
         };
-        const testStats: RecursivePartial<WebpackStats.ToJsonOutput> = {
+        const testStats: WebpackStats = {
             modules: [
                 {
                     name: 'lib/a',
@@ -259,6 +263,7 @@ describe('getModuleGraphWithReasons', () => {
                     name: 'lib/d',
                     reasons: [
                         {
+                            active: true,
                             moduleName: 'lib/a',
                         },
                     ],
@@ -267,6 +272,7 @@ describe('getModuleGraphWithReasons', () => {
                     name: 'lib/b',
                     reasons: [
                         {
+                            active: true,
                             moduleName: 'lib/a',
                         },
                     ],
@@ -275,6 +281,7 @@ describe('getModuleGraphWithReasons', () => {
                     name: 'lib/c',
                     reasons: [
                         {
+                            active: true,
                             moduleName: 'lib/a',
                         },
                     ],
@@ -283,7 +290,7 @@ describe('getModuleGraphWithReasons', () => {
         };
         const childGraph = getModuleGraphWithReasons(
             testGraph,
-            testStats as WebpackStats.ToJsonOutput,
+            testStats as WebpackStats,
         );
 
         expect(childGraph['lib/a'].reasonChildren).toEqual([
@@ -320,7 +327,7 @@ describe('getModuleGraphWithReasons', () => {
                 size: 10,
             },
         };
-        const testStats: RecursivePartial<WebpackStats.ToJsonOutput> = {
+        const testStats: WebpackStats = {
             modules: [
                 {
                     name: 'lib/a',
@@ -329,6 +336,7 @@ describe('getModuleGraphWithReasons', () => {
                     name: 'lib/d',
                     reasons: [
                         {
+                            active: true,
                             moduleName: 'lib/a',
                         },
                     ],
@@ -337,6 +345,7 @@ describe('getModuleGraphWithReasons', () => {
                     name: 'lib/b',
                     reasons: [
                         {
+                            active: true,
                             moduleName: 'lib/a',
                         },
                     ],
@@ -345,12 +354,15 @@ describe('getModuleGraphWithReasons', () => {
                     name: 'lib/c',
                     reasons: [
                         {
+                            active: true,
                             moduleName: 'lib/a',
                         },
                         {
+                            active: true,
                             moduleName: 'lib/d',
                         },
                         {
+                            active: true,
                             moduleName: 'lib/b',
                         },
                     ],
@@ -359,7 +371,7 @@ describe('getModuleGraphWithReasons', () => {
         };
         const childGraph = getModuleGraphWithReasons(
             testGraph,
-            testStats as WebpackStats.ToJsonOutput,
+            testStats as WebpackStats,
         );
 
         expect(childGraph['lib/c'].reasons).toEqual([
@@ -370,7 +382,7 @@ describe('getModuleGraphWithReasons', () => {
     });
 
     it('uses the last element in issuerPath when there is a reason with multiple parents', () => {
-        const testStats: RecursivePartial<WebpackStats.ToJsonOutput> = {
+        const testStats: WebpackStats = {
             namedChunkGroups: {},
             assets: [],
             modules: [
@@ -387,6 +399,7 @@ describe('getModuleGraphWithReasons', () => {
                     issuerPath: [{ name: 'lib/parent' }],
                     reasons: [
                         {
+                            active: true,
                             moduleName: 'lib/parent + 42 modules',
                             moduleId: 1,
                         },
@@ -399,6 +412,7 @@ describe('getModuleGraphWithReasons', () => {
                     issuerPath: [{ name: 'lib/parent' }],
                     reasons: [
                         {
+                            active: true,
                             moduleName: 'lib/parent + 42 modules',
                             moduleId: 1,
                         },
@@ -414,6 +428,7 @@ describe('getModuleGraphWithReasons', () => {
                     ],
                     reasons: [
                         {
+                            active: true,
                             moduleName: 'lib/parent + 42 modules',
                             moduleId: 1,
                         },
@@ -422,11 +437,11 @@ describe('getModuleGraphWithReasons', () => {
                 },
             ],
         };
-        const testGraph: ModuleGraph = deriveBundleData(testStats as Stats)
+        const testGraph: ModuleGraph = deriveBundleData(testStats as unknown as Stats)
             .graph;
         const childGraph = getModuleGraphWithReasons(
             testGraph,
-            testStats as WebpackStats.ToJsonOutput,
+            testStats as WebpackStats,
         );
 
         expect(childGraph['lib/b'].reasons).toEqual([
