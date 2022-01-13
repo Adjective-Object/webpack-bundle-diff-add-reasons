@@ -26,13 +26,14 @@ function getRegularizedReasonModuleName(
         // parent is a concatenated module.
         // recover from this by taking the last element
         // in the issuerPatj
-        if (!node.issuerPath || !node.issuerPath.length) {
-            throw new Error(
-                'module included by concatenated module has no issuer path',
-            );
+        if (node.issuerPath?.length) {
+            const lastNodeInPath = node.issuerPath[node.issuerPath.length - 1];
+            return lastNodeInPath.name;
+        } else if (reason.resolvedModule) {
+            return reason.resolvedModule;
+        } else {
+            throw new Error(`module included by concatenated module has no issuer path.\nNode: ${JSON.stringify(node, null, 2)}\nReason: ${JSON.stringify(reason, null, 2)}`);
         }
-        const lastNodeInPath = node.issuerPath[node.issuerPath.length - 1];
-        return lastNodeInPath.name;
     }
 
     return name;
