@@ -28,7 +28,7 @@ const data = deriveBundleData(webpackStats);
 // Add reasons to the graph
 const graphWithReasons = getModuleGraphWithReasons(
     data.bundleData.graph,
-    webpackStats
+    webpackStats,
 );
 ```
 
@@ -39,4 +39,5 @@ yarn # install dependencies
 yarn build # build.             Can also use `rollup -c`
 yarn watch # build with watch.  Can also use `rollup -cw`
 yarn jest # run tests
+npm publish
 ```
