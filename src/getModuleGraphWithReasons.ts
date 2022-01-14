@@ -1,5 +1,5 @@
 import { ModuleGraphNode, ModuleGraph } from 'webpack-bundle-diff';
-import { Stats as WebpackStats } from 'webpack';
+import { StatsCompilation as WebpackStats, StatsModule, StatsModuleReason } from 'webpack';
 
 export interface ModuleGraphWithReasons<
     TNode extends ModuleGraphNodeWithReasons = ModuleGraphNodeWithReasons
@@ -15,8 +15,8 @@ export type ModuleGraphNodeWithReasons<
 };
 
 function getRegularizedReasonModuleName(
-    node: WebpackStats.FnModules,
-    reason: WebpackStats.Reason,
+    node: StatsModule,
+    reason: StatsModuleReason,
 ): string | null {
     const name = reason.moduleName;
     if (!name) {
@@ -26,13 +26,14 @@ function getRegularizedReasonModuleName(
         // parent is a concatenated module.
         // recover from this by taking the last element
         // in the issuerPatj
-        if (!node.issuerPath || !node.issuerPath.length) {
-            throw new Error(
-                'module included by concatenated module has no issuer path',
-            );
+        if (node.issuerPath?.length) {
+            const lastNodeInPath = node.issuerPath[node.issuerPath.length - 1];
+            return lastNodeInPath.name!;
+        } else if (reason.resolvedModule) {
+            return reason.resolvedModule;
+        } else {
+            throw new Error(`module included by concatenated module has no issuer path.\nNode: ${JSON.stringify(node, null, 2)}\nReason: ${JSON.stringify(reason, null, 2)}`);
         }
-        const lastNodeInPath = node.issuerPath[node.issuerPath.length - 1];
-        return lastNodeInPath.name;
     }
 
     return name;
@@ -46,7 +47,7 @@ function getRegularizedReasonModuleName(
  */
 export function getModuleGraphWithReasons(
     graph: ModuleGraph,
-    stats: WebpackStats.ToJsonOutput,
+    stats: WebpackStats,
 ): ModuleGraphWithReasons {
     const newGraph: ModuleGraphWithReasons = {};
 
@@ -54,11 +55,11 @@ export function getModuleGraphWithReasons(
         throw new Error('no modules in provided webpack stats object');
     }
 
-    const moduleMap: Map<string, WebpackStats.FnModules> = new Map();
-    let toVisit = [...stats.modules.values()];
+    const moduleMap: Map<string, StatsModule> = new Map();
+    let toVisit = [...stats.modules];
     while (toVisit.length) {
         const thisModule = toVisit.pop();
-        if (!thisModule) {
+        if (!thisModule?.name) {
             continue;
         }
         moduleMap.set(thisModule.name, thisModule);
@@ -120,13 +121,13 @@ export function getModuleGraphWithReasons(
 
         const sortedReasons = (
             statsNode.reasons || []
-        ).sort((a: WebpackStats.Reason, b: WebpackStats.Reason) =>
+        ).sort((a: StatsModuleReason, b: StatsModuleReason) =>
             a.moduleName && b.moduleName
                 ? a.moduleName.localeCompare(b.moduleName)
                 : 0,
         );
 
-        sortedReasons.forEach((reason: WebpackStats.Reason): void => {
+        sortedReasons.forEach((reason: StatsModuleReason): void => {
             if (
                 // include modules without type. This includes modules
                 // that webpack includes but bailed of because it could not
