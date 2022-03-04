@@ -1,5 +1,9 @@
 import { ModuleGraphNode, ModuleGraph } from 'webpack-bundle-diff';
-import { StatsCompilation as WebpackStats, StatsModule, StatsModuleReason } from 'webpack';
+import {
+    StatsCompilation as WebpackStats,
+    StatsModule,
+    StatsModuleReason,
+} from 'webpack';
 
 export interface ModuleGraphWithReasons<
     TNode extends ModuleGraphNodeWithReasons = ModuleGraphNodeWithReasons
@@ -32,7 +36,13 @@ function getRegularizedReasonModuleName(
         } else if (reason.resolvedModule) {
             return reason.resolvedModule;
         } else {
-            throw new Error(`module included by concatenated module has no issuer path.\nNode: ${JSON.stringify(node, null, 2)}\nReason: ${JSON.stringify(reason, null, 2)}`);
+            throw new Error(
+                `module included by concatenated module has no issuer path.\nNode: ${JSON.stringify(
+                    node,
+                    null,
+                    2,
+                )}\nReason: ${JSON.stringify(reason, null, 2)}`,
+            );
         }
     }
 
@@ -136,9 +146,10 @@ export function getModuleGraphWithReasons(
                 // (In tests this triggers on style loader chains of preprocessed css)
                 (reason.type &&
                     // Handle webpack updating underneath types.
-                    ((reason.type as any) == 'entry' ||
+                    (reason.type == 'entry' ||
                         reason.type == 'multi entry' ||
-                        reason.type == 'single entry')) ||
+                        reason.type == 'single entry' ||
+                        reason.type == 'loader import')) ||
                 // Entry modules get a reason that says it's used as a library export, with no moduleName or other information
                 // https://github.com/webpack/webpack/blob/547b4d8deb75355bf5695349fdcc3830ec22d68f/lib/library/ExportPropertyLibraryPlugin.js#L86
                 reason.explanation === 'used as library export'
